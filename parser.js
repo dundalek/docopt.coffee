@@ -1,6 +1,7 @@
 var fs = require('fs');
 var ohm = require('ohm-js');
 var docopt = require('./docopt');
+var _ = require('lodash');
 
 function optimize(e) {
   switch(e.type) {
@@ -60,6 +61,17 @@ var actionDict = {
   Atom: function(e) {
     return e.ast();
   },
+  Atom_options: function(e) {
+    return {
+      "type": "Optional",
+      "children": [
+        {
+          "type": "AnyOptions",
+          "children": []
+        }
+      ]
+    };
+  },
   Required: function(leftParen, e, rightParen) {
     return {
       type: 'Required',
@@ -72,10 +84,15 @@ var actionDict = {
       children: [e.ast()]
     };
   },
-  longoption: function(dashes, name, c, d) {
-    // todo argname
-    // arguments: [].map.call(arguments, x => x.ast())
-    return { type: 'Option', short: null, long: dashes.ast() + name.ast().join('') };
+  longoption: function(dashes, name, c, arg) {
+    var argcount = 0;
+    var value = null;
+    arg = arg.ast();
+    if (arg.length && arg[0].type === 'Argument') {
+      argcount = 1;
+      value = arg[0].name;
+    }
+    return { type: 'Option', short: null, long: dashes.ast() + name.ast().join(''), argcount, value };
   },
   shortoptions: function(a, b) {
     // if (this.sourceString.length > 2) {
@@ -114,6 +131,43 @@ function translateAST(e) {
   }
 }
 
+function traverseArgs(e, options, idx) {
+  if (!idx) {
+    options = options.map(x => JSON.parse(JSON.stringify(x)));
+    idx = {
+      short: _(options).filter('short').keyBy('short').value(),
+      long: _(options).filter('long').keyBy('long').value()
+    };
+  }
+
+  if (e.children) {
+    var children = [];
+    for (var i = 0; i < e.children.length; i += 1) {
+      var child = traverseArgs(e.children[i], options, idx);
+
+      if (child.type === 'Option' && (child.short in idx.short || child.long in idx.long)) {
+        var opt = idx.short[child.short] || idx.long[child.long];
+        if (child.short in idx.short) {
+          child.long = child.long || idx.short[child.short].long;
+        }
+        if (child.long in idx.long) {
+          child.short = child.short || idx.long[child.long].short;
+        }
+        if (opt.argcount > 0 && i < e.children.length - 1 && e.children[i+1].type === 'Argument') {
+          child.argcount = 1;
+          child.value = e.children[i+1].name;
+          i += 1;
+        } else if (!child.value) {
+          child.value = true;
+        }
+      }
+      children.push(child);
+    }
+    e.children = children;
+  }
+  return e;
+}
+
 var grammar = ohm.grammar(fs.readFileSync(__dirname + '/docopt.ohm', 'utf-8'));
 var semantics = grammar.createSemantics().addOperation('ast', actionDict);
 
@@ -122,5 +176,6 @@ module.exports = {
   semantics,
   optimize,
   optimizeRoot,
-  translateAST
+  translateAST,
+  traverseArgs
 };

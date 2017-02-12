@@ -1,5 +1,5 @@
 {printable_usage, parse_doc_options, formal_usage, parse_args, extras, Option, Argument, Command, Dict, DocoptExit} = require './docopt'
-{grammar, semantics, translateAST} = require './parser'
+{grammar, semantics, translateAST, traverseArgs} = require './parser'
 
 parse_pattern = (source, options) ->
     m = grammar.match(source)
@@ -8,7 +8,7 @@ parse_pattern = (source, options) ->
     else
       throw m.message  # Extract the error message.
 
-    translateAST result
+    translateAST traverseArgs(result, options)
 
 docopt = (doc, kwargs={}) ->
     allowedargs = ['argv', 'name', 'help', 'version']
@@ -41,3 +41,4 @@ docopt = (doc, kwargs={}) ->
 
 module.exports =
   docopt: docopt
+  parse_pattern: parse_pattern

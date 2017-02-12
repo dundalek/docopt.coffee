@@ -12,7 +12,7 @@ Docopt {
     = Atom "..."?
 
   Atom
-    = "[options]"
+    = "[options]" -- options
     | Required
     | Optional
     | longoption
