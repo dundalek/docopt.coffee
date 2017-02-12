@@ -1,0 +1,47 @@
+Docopt {
+  Start
+    = Expr?
+
+  Expr
+    = Seq ("|" Seq)*
+
+  Seq
+    = AtomExpr+
+
+  AtomExpr
+    = Atom "..."?
+
+  Atom
+    = "[options]"
+    | Required
+    | Optional
+    | longoption
+    | shortoptions
+    | ShortOptionsArg
+    | argument
+    | command
+
+  Required
+    = "(" Expr ")"
+
+  Optional
+    = "[" Expr "]"
+
+  longoption
+    = "--" (alnum | "-")+ ("=" argument)?
+
+  shortoptions
+    = "-" (alnum)+
+
+  ShortOptionsArg
+    = "{" space+ "-" (alnum)+ (space+ argument)* space+ "}"
+
+  argument
+    = "<" (alnum | " " | "-" | "/" | ":")+ ">" -- bracketed
+    | (upper | "_") (upper | "-" | "_")*       -- uppercased
+
+  command
+    = (lower | upper | "-" | "_")+
+}
+
+// -- caseInsensitive<"usage">
