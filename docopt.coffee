@@ -529,3 +529,4 @@ module.exports =
     parse_shorts : parse_shorts
     parse_args   : parse_args
     printable_usage: printable_usage
+    extras       : extras

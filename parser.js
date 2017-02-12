@@ -1,5 +1,6 @@
 var fs = require('fs');
 var ohm = require('ohm-js');
+var docopt = require('./docopt');
 
 function optimize(e) {
   switch(e.type) {
@@ -101,12 +102,25 @@ var actionDict = {
   }
 }
 
-var grammar = ohm.grammar(fs.readFileSync('./docopt.ohm', 'utf-8'));
+function translateAST(e) {
+  if (e.children) {
+    var children = e.children.map(translateAST);
+    return new docopt[e.type](children);
+  }
+  switch (e.type) {
+    case 'Argument': return new docopt[e.type](e.name, e.value);
+    case 'Command': return new docopt[e.type](e.name, e.value);
+    case 'Option': return new docopt[e.type](e.short, e.long, e.argcount, e.value);
+  }
+}
+
+var grammar = ohm.grammar(fs.readFileSync(__dirname + '/docopt.ohm', 'utf-8'));
 var semantics = grammar.createSemantics().addOperation('ast', actionDict);
 
 module.exports = {
   grammar,
   semantics,
   optimize,
-  optimizeRoot
+  optimizeRoot,
+  translateAST
 };
