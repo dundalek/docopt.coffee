@@ -23,6 +23,10 @@ class Pattern
         formals = @children.join ', '
         "#{@constructor.name}(#{formals})"
 
+    toJSON: ->
+        type: @constructor.name
+        children: @children
+
     match: -> throw new Error("""classes inheriting from Pattern
                                  must overload the match method""")
 
@@ -116,6 +120,11 @@ class Argument extends Pattern
 
     toString: -> "Argument(#{@argname}, #{@value})"
 
+    toJSON: ->
+        type: @constructor.name
+        name: @argname
+        value: @value
+
     match: (left, collected=[]) ->
         args = (l for l in left when l.constructor is Argument)
         if not args.length then return [false, left, collected]
@@ -142,6 +151,11 @@ class Command extends Pattern
     toString: ->
         "Command(#{@cmdname}, #{@value})"
 
+    toJSON: ->
+        type: @constructor.name
+        name: @cmdname
+        value: @value
+
     match: (left, collected=[]) ->
         args = (l for l in left when l.constructor is Argument)
         if not args.length or args[0].value isnt @name()
@@ -156,6 +170,13 @@ class Option extends Pattern
     constructor: (@short=null, @long=null, @argcount=0, @value=false) ->
 
     toString: -> "Option(#{@short}, #{@long}, #{@argcount}, #{@value})"
+
+    toJSON: ->
+        type: @constructor.name
+        short: @short
+        long: @long
+        argcount: @argcount
+        value: @value
 
     name: -> @long or @short
 
