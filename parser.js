@@ -145,6 +145,17 @@ function traverseArgs(e, options, idx) {
     for (var i = 0; i < e.children.length; i += 1) {
       var child = traverseArgs(e.children[i], options, idx);
 
+      if (child.type === 'Option' && child.short && child.short.length !== 2) {
+        var opts = child.short.split('').slice(1).map(c => ({
+          type: 'Option',
+          short: '-' + c,
+          argcount: 0,
+          value: false,
+        }));
+        [].splice.apply(e.children, [i, 1].concat(opts));
+        child = e.children[i];
+      }
+
       if (child.type === 'Option' && (child.short in idx.short || child.long in idx.long)) {
         var opt = idx.short[child.short] || idx.long[child.long];
         if (child.short in idx.short) {
