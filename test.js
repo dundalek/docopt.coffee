@@ -17,7 +17,7 @@ function parseTests(raw) {
       var expected = JSON.parse(parts.slice(1).join('\n'));
       parts = parts[0].trim().split(' ');
       var prog = parts[0];
-      var argv = parts[1] || '';
+      var argv = parts.slice(1).join(' ');
       return { prog, argv, expected };
     });
 
